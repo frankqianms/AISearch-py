@@ -1,127 +1,67 @@
-import { DataSource, Memory, OpenAIEmbeddings, RenderedPromptSection, Tokenizer } from '@microsoft/teams-ai';
-import { AzureKeyCredential, SearchClient, GeographyPoint } from '@azure/search-documents';
-import { TurnContext } from 'botbuilder';
+from dataclasses import dataclass
+from typing import Optional, List
+from azure.search.documents.indexes.models import _edm as EDM
+from teams.ai.embeddings import OpenAIEmbeddings, AzureOpenAIEmbeddings
+from teams.state.memory import Memory
+from teams.state.state import TurnContext
+from teams.ai.tokenizers import Tokenizer
+@dataclass
+class Address:
+    streetAddress: Optional[str] = None
+    city: Optional[str] = None
+    stateProvince: Optional[str] = None
+    postalCode: Optional[str] = None
+    country: Optional[str] = None
 
-/**
- * Defines the Restaurant Interface.
- */
-export interface Restaurant {
-    restaurantId?: string;
-    restaurantName?: string | null;
-    description?: string | null;
-    descriptionVectorEn?: number[] | null;
-    category?: string | null;
-    tags?: string[] | null;
-    rating?: number | null;
-    location?: GeographyPoint | null;
-    address?: {
-        streetAddress?: string | null;
-        city?: string | null;
-        stateProvince?: string | null;
-        postalCode?: string | null;
-        country?: string | null;
-    } | null;
-}
+@dataclass
+class Restaurant:
+    restaurantId: Optional[str] = None
+    restaurantName: Optional[str] = None
+    description: Optional[str] = None
+    descriptionVectorEn: Optional[List[float]] = None
+    category: Optional[str] = None
+    tags: Optional[List[str]] = None
+    rating: Optional[float] = None
+    location: Optional[EDM.GeographyPoint] = None  # Replace 'GeographyPoint' with the actual type
+    address: Optional[Address] = None
 
-/**
- * Options for creating a `AzureAISearchDataSource`.
- */
-export interface AzureAISearchDataSourceOptions {
-    /**
-     * Name of the data source. This is the name that will be used to reference the data source in the prompt template.
-     */
-    name: string;
+@dataclass
+class AzureAISearchDataSourceOptions:
+    name: str
+    indexName: str
+    azureOpenAIApiKey: str
+    azureOpenAIEndpoint: str
+    azureOpenAIEmbeddingDeployment: str
+    azureAISearchApiKey: str
+    azureAISearchEndpoint: str
 
-    /**
-     * Name of the Azure AI Search index.
-     */
-    indexName: string;
+from abc import ABC, abstractmethod
+from azure.core.credentials import AzureKeyCredential
+from azure.search.documents import SearchClient
+import json
 
-    /**
-     * Azure OpenAI API key.
-     */
-    azureOpenAIApiKey: string;
+class DataSource(ABC):
+    @abstractmethod
+    async def renderData(self):
+        pass
 
-    /**
-     * Azure OpenAI endpoint. This is used to generate embeddings for the user's input.
-     */
-    azureOpenAIEndpoint: string;
-
-    /**
-     * Azure OpenAI Embedding deployment. This is used to generate embeddings for the user's input.
-     */
-    azureOpenAIEmbeddingDeployment: string;
-
-    /**
-     * Azure AI Search API key.
-     */
-    azureAISearchApiKey: string;
-
-    /**
-     * Azure AI Search endpoint.
-     */
-    azureAISearchEndpoint: string;
-}
-
-/**
- * A data source that uses a Azure AI Search index to inject text snippets into a prompt.
- */
-export class AzureAISearchDataSource implements DataSource {
-    /**
-     * Name of the data source and local index.
-     */
-    public readonly name: string;
-
-    /**
-     * Options for creating the data source.
-     */
-    private readonly options: AzureAISearchDataSourceOptions;
-
-    /**
-     * Azure AI Search client.
-     */
-    private readonly searchClient: SearchClient<Restaurant>;
-
-    /**
-     * Creates a new `AzureAISearchDataSource` instance.
-     * @param {AzureAISearchDataSourceOptions} options Options for creating the data source.
-     */
-    public constructor(options: AzureAISearchDataSourceOptions) {
-        this.name = options.name;
-        this.options = options;
-        this.searchClient = new SearchClient<Restaurant>(
+class AzureAISearchDataSource(DataSource):
+    def __init__(self, options: AzureAISearchDataSourceOptions):
+        self.name = options.name
+        self.options = options
+        self.searchClient = SearchClient(
             options.azureAISearchEndpoint,
             options.indexName,
-            new AzureKeyCredential(options.azureAISearchApiKey),
-            {}
-        );
-    }
+            AzureKeyCredential(options.azureAISearchApiKey)
+        )
 
-    /**
-     * Renders the data source as a string of text.
-     * @remarks
-     * The returned output should be a string of text that will be injected into the prompt at render time.
-     * @param {TurnContext} context Turn context for the current turn of conversation with the user.
-     * @param _context
-     * @param {Memory} memory An interface for accessing state values.
-     * @param {Tokenizer} tokenizer Tokenizer to use when rendering the data source.
-     * @param {number} maxTokens Maximum number of tokens allowed to be rendered.
-     * @returns {Promise<RenderedPromptSection<string>>} A promise that resolves to the rendered data source.
-     */
-    public async renderData(
-        _context: TurnContext,
-        memory: Memory,
-        tokenizer: Tokenizer,
-        maxTokens: number
-    ): Promise<RenderedPromptSection<string>> {
-        const query: string = memory.getValue('temp.input');
+    async def renderData(self, _context: TurnContext, memory: Memory, tokenizer: Tokenizer, maxTokens):
+        query = memory.get('temp.input')
 
-        // If the user input is empty, don't add any text to the prompt.
-        if (!query) {
-            return { output: '', length: 0, tooLong: false };
-        }
+        if not query:
+            return {'output': '', 'length': 0, 'tooLong': False}
 
-        const selectedFields = [
+        selectedFields = [
             'restaurantId',
             'restaurantName',
             'description',
@@ -130,103 +70,42 @@ export class AzureAISearchDataSource implements DataSource {
             'rating',
             'location',
             'address'
-        ];
+        ]
 
-        //// TEXT SEARCH ////
-        // Get the restaurants with the query has high lexical relevance to category, tags, and restaurant name.
-        const searchResults = await this.searchClient.search(query, {
-            searchFields: ['category', 'tags', 'restaurantName'],
-            select: selectedFields as any
-        });
+        searchResults = await self.searchClient.search(query, {
+            'searchFields': ['category', 'tags', 'restaurantName'],
+            'select': selectedFields
+        })
 
-        //// VECTOR SEARCH ////
-        //// Get the restaurants with description that is the most similar to the user input.
-        // const queryVector: number[] = await this.getEmbeddingVector(query);
-        // const searchResults = await this.searchClient.search('*', {
-        //     vectorSearchOptions: {
-        //         queries: [
-        //             {
-        //                 kind: 'vector',
-        //                 fields: ['descriptionVectorEn'],
-        //                 kNearestNeighborsCount: 3,
-        //                 // The query vector is the embedding of the user's input
-        //                 vector: queryVector
-        //             }
-        //         ]
-        //     },
-        //     select: selectedFields as any
-        // });
+        if not searchResults.results:
+            return {'output': '', 'length': 0, 'tooLong': False}
 
-        //// HYBRID SEARCH ////
-        // Search using both vector and text search
-        // const queryVector: number[] = await this.getEmbeddingVector(query);
-        // const searchResults = await this.searchClient.search(query, {
-        //     searchFields: ['category', 'tags', 'restaurantName'],
-        //     select: selectedFields as any,
-        //     vectorSearchOptions: {
-        //         queries: [
-        //             {
-        //                 kind: 'vector',
-        //                 fields: ['descriptionVectorEn'],
-        //                 kNearestNeighborsCount: 3,
-        //                 // The query vector is the embedding of the user's input
-        //                 vector: queryVector
-        //             }
-        //         ]
-        //     },
-        // });
+        usedTokens = 0
+        doc = ''
+        for result in searchResults.results:
+            formattedResult = self.formatDocument(result.document)
+            tokens = len(tokenizer.encode(formattedResult))
 
-        // Show example for how to make multiple search types
+            if usedTokens + tokens > maxTokens:
+                break
 
-        if (!searchResults.results) {
-            return { output: '', length: 0, tooLong: false };
-        }
+            doc += formattedResult
+            usedTokens += tokens
 
-        // Concatenate the restaurant documents (i.e json object) string into a single document
-        // until the maximum token limit is reached. This can be specified in the prompt template.
-        let usedTokens = 0;
-        let doc = '';
-        for await (const result of searchResults.results) {
-            const formattedResult = this.formatDocument(result.document);
-            const tokens = tokenizer.encode(formattedResult).length;
+        return {'output': doc, 'length': usedTokens, 'tooLong': usedTokens > maxTokens}
 
-            if (usedTokens + tokens > maxTokens) {
-                break;
-            }
+    def formatDocument(self, result: Restaurant):
+        return f"<context>{json.dumps(result)}</context>"
 
-            doc += formattedResult;
-            usedTokens += tokens;
-        }
+    async def getEmbeddingVector(self, text: str):
+        embeddings = AzureOpenAIEmbeddings({
+            'azureApiKey': self.options.azureOpenAIApiKey,
+            'azureEndpoint': self.options.azureOpenAIEndpoint,
+            'azureDeployment': self.options.azureOpenAIEmbeddingDeployment
+        })
 
-        return { output: doc, length: usedTokens, tooLong: usedTokens > maxTokens };
-    }
+        result = await embeddings.create_embeddings(self.options.azureOpenAIEmbeddingDeployment, text)
+        if result.status != 'success' or not result.output:
+            raise Exception(f"Failed to generate embeddings for description: {text}")
 
-    /**
-     * Formats the restaurant document as a json string .
-     * @param {Restaurant} result The restaurant document to format.
-     * @returns {string} The formatted restaurant document as a json string.
-     */
-    private formatDocument(result: Restaurant): string {
-        return `<context>${JSON.stringify(result)}</context>`;
-    }
-
-    /**
-     * Uses Azure OpenAI to generate embeddings for the user's input.
-     * @param text The user's input.
-     * @returns The embedding vector for the user's input.
-     */
-    private async getEmbeddingVector(text: string): Promise<number[]> {
-        const embeddings = new OpenAIEmbeddings({
-            azureApiKey: this.options.azureOpenAIApiKey,
-            azureEndpoint: this.options.azureOpenAIEndpoint,
-            azureDeployment: this.options.azureOpenAIEmbeddingDeployment
-        });
-
-        const result = await embeddings.createEmbeddings(this.options.azureOpenAIEmbeddingDeployment, text);
-        if (result.status !== 'success' || !result.output) {
-            throw new Error(`Failed to generate embeddings for description: ${text}`);
-        }
-
-        return result.output[0];
-    }
-}
+        return result.output[0]
