@@ -8,10 +8,6 @@ from http import HTTPStatus
 from aiohttp import web
 from botbuilder.core.integration import aiohttp_error_middleware
 
-from indexers.setup import setup
-
-asyncio.run(setup())
-
 from bot import bot_app
 
 routes = web.RouteTableDef()

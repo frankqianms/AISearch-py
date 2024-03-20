@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass
 import json
 import os
@@ -16,6 +17,7 @@ from teams.state import TurnState
 
 from AzureAISearchDataSource import AzureAISearchDataSource, AzureAISearchDataSourceOptions
 from config import Config
+from setup import setup
 
 config = Config()
 
@@ -43,21 +45,22 @@ model = OpenAIModel(
 prompts = PromptManager(PromptManagerOptions(prompts_folder=f"{os.getcwd()}/prompts"))
 
 prompts.add_data_source(
-    AzureAISearchDataSource({
-        'name': 'azure-ai-search',
-        'indexName': 'restaurants',
-        'azureOpenAIApiKey': config.AZURE_OPENAI_API_KEY,
-        'azureOpenAIEndpoint': config.AZURE_OPENAI_ENDPOINT,
-        'azureOpenAIEmbeddingDeployment': config.AZURE_OPENAI_MODEL_DEPLOYMENT_NAME,
-        'azureAISearchApiKey': config.AZURE_SEARCH_KEY,
-        'azureAISearchEndpoint': config.AZURE_SEARCH_ENDPOINT,
-        'azureOpenAIEmbeddingDeployment': config.AZURE_OPENAI_EMBEDDING_DEPLOYMENT  
-    })
+    AzureAISearchDataSourceOptions(
+        name='azure-ai-search',
+        indexName='hotels',
+        azureOpenAIApiKey=config.AZURE_OPENAI_API_KEY,
+        azureOpenAIEndpoint=config.AZURE_OPENAI_ENDPOINT,
+        azureOpenAIEmbeddingDeployment=config.AZURE_OPENAI_MODEL_DEPLOYMENT_NAME,
+        azureAISearchApiKey=config.AZURE_SEARCH_KEY,
+        azureAISearchEndpoint=config.AZURE_SEARCH_ENDPOINT,
+    )
 )
 
 planner = ActionPlanner(
     ActionPlannerOptions(model=model, prompts=prompts, default_prompt="chat")
 )
+
+print("create planner")
 
 # Define storage and application
 storage = MemoryStorage()
