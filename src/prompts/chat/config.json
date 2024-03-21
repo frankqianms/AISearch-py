@@ -18,7 +18,7 @@
   "augmentation": {
       "augmentation_type": "none",
       "data_sources": {
-          "ai-search-franktest": 2500
+          "azure-ai-search": 2500
       }
   }
 }

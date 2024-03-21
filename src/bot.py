@@ -46,7 +46,7 @@ prompts = PromptManager(PromptManagerOptions(prompts_folder=f"{os.getcwd()}/prom
 prompts.add_data_source(
     AzureAISearchDataSource(
         AzureAISearchDataSourceOptions(
-            name='ai-search-franktest',
+            name='azure-ai-search',
             indexName='contoso-electronics',
             azureOpenAIApiKey=config.AZURE_OPENAI_API_KEY,
             azureOpenAIEndpoint=config.AZURE_OPENAI_ENDPOINT,
