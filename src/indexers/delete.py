@@ -7,7 +7,7 @@ from config import Config
 def delete_index(client: SearchIndexClient, name: str):
     client.delete_index(name)
 
-index = 'constoso-electronics'
+index = 'contoso-electronics'
 search_api_key = Config.AZURE_SEARCH_KEY
 search_api_endpoint = Config.AZURE_SEARCH_ENDPOINT
 credentials = AzureKeyCredential(search_api_key)

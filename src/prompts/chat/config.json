@@ -1,12 +1,13 @@
 {
   "schema": 1.1,
-  "description": "Chat with Teams AI Bot",
+  "description": "Chat with Teams RAG",
   "type": "completion",
   "completion": {
+      "model": "gpt-35-turbo",
       "completion_type": "chat",
       "include_history": true,
       "include_input": true,
-      "max_input_tokens": 2800,
+      "max_input_tokens": 4096,
       "max_tokens": 1000,
       "temperature": 0.9,
       "top_p": 0.0,
@@ -15,6 +16,9 @@
       "stop_sequences": []
   },
   "augmentation": {
-      "augmentation_type": "None"
+      "augmentation_type": "none",
+      "data_sources": {
+          "ai-search-franktest": 2500
+      }
   }
 }

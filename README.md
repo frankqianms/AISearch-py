@@ -32,7 +32,7 @@ The app template is built using the Teams AI library, which provides the capabil
 
 **Congratulations**! You are running an application that can now interact with users in Teams:
 
-![ai chat bot](https://user-images.githubusercontent.com/7642967/258726187-8306610b-579e-4301-872b-1b5e85141eff.png)
+(![alt text](image.png))
 
 ## What's included in the template
 

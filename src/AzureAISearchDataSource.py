@@ -42,8 +42,14 @@ import json
 
 class DataSource(ABC):
     @abstractmethod
-    async def renderData(self):
+    async def render_data(self):
         pass
+    
+class Result:
+    def __init__(self, output, length, too_long):
+        self.output = output
+        self.length = length
+        self.too_long = too_long
 
 class AzureAISearchDataSource(DataSource):
     def __init__(self, options: AzureAISearchDataSourceOptions):
@@ -55,57 +61,49 @@ class AzureAISearchDataSource(DataSource):
             AzureKeyCredential(options.azureAISearchApiKey)
         )
 
-    async def renderData(self, _context: TurnContext, memory: Memory, tokenizer: Tokenizer, maxTokens):
+    async def render_data(self, _context: TurnContext, memory: Memory, tokenizer: Tokenizer, maxTokens):
         query = memory.get('temp.input')
+        print(query)
 
         if not query:
             return {'output': '', 'length': 0, 'tooLong': False}
 
         selectedFields = [
-            'restaurantId',
-            'restaurantName',
+            'docId',
+            'docTitle',
             'description',
-            'category',
-            'tags',
-            'rating',
-            'location',
-            'address'
+            'descriptionVector',
         ]
 
-        searchResults = await self.searchClient.search(query, {
-            'searchFields': ['category', 'tags', 'restaurantName'],
-            'select': selectedFields
-        })
+        searchResults = self.searchClient.search(
+            search_text=query,
+        )
 
-        if not searchResults.results:
-            return {'output': '', 'length': 0, 'tooLong': False}
+        if not searchResults:
+            return Result('', 0, False)
 
         usedTokens = 0
         doc = ''
-        for result in searchResults.results:
-            formattedResult = self.formatDocument(result.document)
-            tokens = len(tokenizer.encode(formattedResult))
+        for result in searchResults:
+            tokens = len(tokenizer.encode(json.dumps(result["description"])))
 
             if usedTokens + tokens > maxTokens:
                 break
 
-            doc += formattedResult
+            doc += json.dumps(result["description"])
             usedTokens += tokens
 
-        return {'output': doc, 'length': usedTokens, 'tooLong': usedTokens > maxTokens}
+        return Result(doc, usedTokens, usedTokens > maxTokens)
 
-    def formatDocument(self, result: Restaurant):
-        return f"<context>{json.dumps(result)}</context>"
+    # async def getEmbeddingVector(self, text: str):
+    #     embeddings = AzureOpenAIEmbeddings({
+    #         'azureApiKey': self.options.azureOpenAIApiKey,
+    #         'azureEndpoint': self.options.azureOpenAIEndpoint,
+    #         'azureDeployment': self.options.azureOpenAIEmbeddingDeployment
+    #     })
 
-    async def getEmbeddingVector(self, text: str):
-        embeddings = AzureOpenAIEmbeddings({
-            'azureApiKey': self.options.azureOpenAIApiKey,
-            'azureEndpoint': self.options.azureOpenAIEndpoint,
-            'azureDeployment': self.options.azureOpenAIEmbeddingDeployment
-        })
+    #     result = await embeddings.create_embeddings(self.options.azureOpenAIEmbeddingDeployment, text)
+    #     if result.status != 'success' or not result.output:
+    #         raise Exception(f"Failed to generate embeddings for description: {text}")
 
-        result = await embeddings.create_embeddings(self.options.azureOpenAIEmbeddingDeployment, text)
-        if result.status != 'success' or not result.output:
-            raise Exception(f"Failed to generate embeddings for description: {text}")
-
-        return result.output[0]
+    #     return result.output[0]

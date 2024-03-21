@@ -10,7 +10,7 @@ from indexers.data import get_doc_data
 from config import Config
 
 async def setup():
-    index = 'contose-electronics'
+    index = 'contoso-electronics'
 
     search_api_key = Config.AZURE_SEARCH_KEY
     search_api_endpoint = Config.AZURE_SEARCH_ENDPOINT
