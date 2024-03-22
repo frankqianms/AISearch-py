@@ -1,3 +1,4 @@
+import os
 from teams.ai.embeddings import AzureOpenAIEmbeddings, AzureOpenAIEmbeddingsOptions  # Replace with the actual module
 
 from config import Config
@@ -32,7 +33,6 @@ async def get_doc_data():
 
     return [doc1, doc2, doc3]
 
-import os
 
 async def get_embedding_vector(text: str):
     embeddings = AzureOpenAIEmbeddings(AzureOpenAIEmbeddingsOptions(

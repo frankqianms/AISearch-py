@@ -1,3 +1,4 @@
+from teams.ai.embeddings import AzureOpenAIEmbeddings, AzureOpenAIEmbeddingsOptions  # Replace with the actual module
 from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
@@ -14,12 +15,13 @@ from azure.search.documents.indexes.models import (
 )
 from time import sleep
 
-from AzureAISearchDataSource import Restaurant
+from AzureAISearchDataSource import Doc
+from config import Config
 
 WAIT_TIME = 4000
 
-def document_key_retriever(document: Restaurant):
-    return document.restaurantId
+def document_key_retriever(document: Doc):
+    return document.docId
 
 def delay(time_in_ms: int):
     sleep(time_in_ms / 1000)
@@ -27,7 +29,7 @@ def delay(time_in_ms: int):
 def delete_index(client: SearchIndexClient, name: str):
     client.delete_index(name)
 
-async def upsert_documents(client: SearchClient, documents: list[Restaurant]):
+async def upsert_documents(client: SearchClient, documents: list[Doc]):
     return client.merge_or_upload_documents(documents)
 
 async def create_index_if_not_exists(client: SearchIndexClient, name: str):
@@ -48,3 +50,4 @@ async def create_index_if_not_exists(client: SearchIndexClient, name: str):
     )
 
     client.create_or_update_index(doc_index)
+

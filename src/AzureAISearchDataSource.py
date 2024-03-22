@@ -1,29 +1,20 @@
 from dataclasses import dataclass
 from typing import Optional, List
 from azure.search.documents.indexes.models import _edm as EDM
+from azure.search.documents.models import VectorQuery, VectorizedQuery
 from teams.ai.embeddings import OpenAIEmbeddings, AzureOpenAIEmbeddings
 from teams.state.memory import Memory
 from teams.state.state import TurnContext
 from teams.ai.tokenizers import Tokenizer
-@dataclass
-class Address:
-    streetAddress: Optional[str] = None
-    city: Optional[str] = None
-    stateProvince: Optional[str] = None
-    postalCode: Optional[str] = None
-    country: Optional[str] = None
+
+from indexers.data import get_embedding_vector
 
 @dataclass
-class Restaurant:
-    restaurantId: Optional[str] = None
-    restaurantName: Optional[str] = None
+class Doc:
+    docId: Optional[str] = None
+    docTitle: Optional[str] = None
     description: Optional[str] = None
-    descriptionVectorEn: Optional[List[float]] = None
-    category: Optional[str] = None
-    tags: Optional[List[str]] = None
-    rating: Optional[float] = None
-    location: Optional[EDM.GeographyPoint] = None  # Replace 'GeographyPoint' with the actual type
-    address: Optional[Address] = None
+    descriptionVector: Optional[List[float]] = None
 
 @dataclass
 class AzureAISearchDataSourceOptions:
@@ -63,13 +54,15 @@ class AzureAISearchDataSource(DataSource):
 
     async def render_data(self, _context: TurnContext, memory: Memory, tokenizer: Tokenizer, maxTokens):
         query = memory.get('temp.input')
+        embedding = await get_embedding_vector(query)
+        vector_query = VectorizedQuery(vector=embedding, k_nearest_neighbors=2, fields="descriptionVector")
+            
         print(query)
 
         if not query:
             return {'output': '', 'length': 0, 'tooLong': False}
 
         selectedFields = [
-            'docId',
             'docTitle',
             'description',
             'descriptionVector',
@@ -77,6 +70,8 @@ class AzureAISearchDataSource(DataSource):
 
         searchResults = self.searchClient.search(
             search_text=query,
+            select=selectedFields,
+            vector_queries=[vector_query],
         )
 
         if not searchResults:
@@ -94,16 +89,3 @@ class AzureAISearchDataSource(DataSource):
             usedTokens += tokens
 
         return Result(doc, usedTokens, usedTokens > maxTokens)
-
-    # async def getEmbeddingVector(self, text: str):
-    #     embeddings = AzureOpenAIEmbeddings({
-    #         'azureApiKey': self.options.azureOpenAIApiKey,
-    #         'azureEndpoint': self.options.azureOpenAIEndpoint,
-    #         'azureDeployment': self.options.azureOpenAIEmbeddingDeployment
-    #     })
-
-    #     result = await embeddings.create_embeddings(self.options.azureOpenAIEmbeddingDeployment, text)
-    #     if result.status != 'success' or not result.output:
-    #         raise Exception(f"Failed to generate embeddings for description: {text}")
-
-    #     return result.output[0]
