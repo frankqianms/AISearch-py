@@ -61,8 +61,6 @@ planner = ActionPlanner(
     ActionPlannerOptions(model=model, prompts=prompts, default_prompt="chat")
 )
 
-print("create planner")
-
 # Define storage and application
 storage = MemoryStorage()
 bot_app = Application[ApplicationTurnState](

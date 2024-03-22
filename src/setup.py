@@ -27,7 +27,7 @@ async def setup():
     data = await get_doc_data()
     await upsert_documents(search_client, data)
 
-    print("Upload of new document succeeded")
+    print("Upload of new documents succeeded. If they did not exist, waiting for several seconds...")
     
 asyncio.run(setup())
 print("setup finished")

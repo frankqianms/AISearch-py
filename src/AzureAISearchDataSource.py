@@ -56,8 +56,6 @@ class AzureAISearchDataSource(DataSource):
         query = memory.get('temp.input')
         embedding = await get_embedding_vector(query)
         vector_query = VectorizedQuery(vector=embedding, k_nearest_neighbors=2, fields="descriptionVector")
-            
-        print(query)
 
         if not query:
             return {'output': '', 'length': 0, 'tooLong': False}
