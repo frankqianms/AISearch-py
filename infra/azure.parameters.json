@@ -18,7 +18,16 @@
       "value": "${{AZURE_OPENAI_MODEL_DEPLOYMENT_NAME}}"
     },
     "azureOpenaiEndpoint" : {
-      "value": "${{SECRET_AZURE_OPENAI_ENDPOINT}}"
+      "value": "${{AZURE_OPENAI_ENDPOINT}}"
+    },
+    "azureOpenaiEmbeddingDeployment" : {
+      "value": "${{AZURE_OPENAI_EMBEDDING_DEPLOYMENT}}"
+    },
+    "azureSearchKey": {
+      "value": "${{SECRET_AZURE_SEARCH_KEY}}"
+    },
+    "azureSearchEndpoint": {
+      "value": "${{AZURE_SEARCH_ENDPOINT}}"
     },
     "webAppSKU": {
       "value": "B1"

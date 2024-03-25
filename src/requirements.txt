@@ -1,3 +1,5 @@
+teams-ai~=1.0.0
 python-dotenv
 aiohttp
-teams-ai~=1.0.0
+azure-search
+azure-search-documents

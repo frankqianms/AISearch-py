@@ -9,3 +9,4 @@ teamsapp.local.yml
 teamsapp.testtool.yml
 
 src/setup.py
+src/files/

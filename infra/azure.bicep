@@ -15,6 +15,9 @@ param botAadAppClientSecret string
 param azureOpenaiKey string
 param azureOpenaiModelDeploymentName string
 param azureOpenaiEndpoint string
+param azureOpenaiEmbeddingDeployment string
+param azureSearchKey string
+param azureSearchEndpoint string
 
 param webAppSKU string
 param linuxFxVersion string
@@ -49,9 +52,17 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
     serverFarmId: serverfarm.id
     siteConfig: {
       alwaysOn: true
-      appCommandLine: 'gunicorn --bind 0.0.0.0 --worker-class aiohttp.worker.GunicornWebWorker --timeout 600 api:api'
+      appCommandLine: 'gunicorn --bind 0.0.0.0 --worker-class aiohttp.worker.GunicornWebWorker --timeout 600 app:app'
       linuxFxVersion: pythonVersion
       appSettings: [
+        {
+          name: 'SCM_COMMAND_IDLE_TIMEOUT'
+          value: '230'
+        }
+        {
+          name: 'WEBSITES_CONTAINER_START_TIME_LIMIT'
+          value: '1800'
+        }
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
           value: 'true'
@@ -75,6 +86,18 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         {
           name: 'AZURE_OPENAI_ENDPOINT'
           value: azureOpenaiEndpoint
+        }
+        {
+          name: 'AZURE_OPENAI_EMBEDDING_DEPLOYMENT'
+          value: azureOpenaiEmbeddingDeployment
+        }
+        {
+          name: 'AZURE_SEARCH_KEY'
+          value: azureSearchKey
+        }
+        {
+          name: 'AZURE_SEARCH_ENDPOINT'
+          value: azureSearchEndpoint
         }
       ]
       ftpsState: 'FtpsOnly'
