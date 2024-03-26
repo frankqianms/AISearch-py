@@ -7,7 +7,7 @@ from teams.state.memory import Memory
 from teams.state.state import TurnContext
 from teams.ai.tokenizers import Tokenizer
 
-from indexers.data import get_embedding_vector
+from src.indexers.data import get_embedding_vector
 
 @dataclass
 class Doc:

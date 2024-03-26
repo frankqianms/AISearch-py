@@ -1,5 +1,8 @@
 .venv/
 .vscode/
+appPackage/
+devTools/
+infra/
 .env
 env/
 __pycache__/
@@ -7,6 +10,8 @@ README.md
 teamsapp.yml
 teamsapp.local.yml
 teamsapp.testtool.yml
+.gitignore
 
-src/setup.py
+src/indexers/setup.py
+src/indexers/delete.py
 src/files/

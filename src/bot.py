@@ -15,8 +15,8 @@ from teams.ai.prompts import PromptManager, PromptManagerOptions
 from teams.ai.actions import ActionTypes
 from teams.state import TurnState
 
-from AzureAISearchDataSource import AzureAISearchDataSource, AzureAISearchDataSourceOptions
-from config import Config
+from .AzureAISearchDataSource import AzureAISearchDataSource, AzureAISearchDataSourceOptions
+from .config import Config
 
 config = Config()
 
@@ -41,7 +41,7 @@ model = OpenAIModel(
     )
 )
     
-prompts = PromptManager(PromptManagerOptions(prompts_folder=f"{os.getcwd()}/prompts"))
+prompts = PromptManager(PromptManagerOptions(prompts_folder=f"{os.getcwd()}/src/prompts"))
 
 prompts.add_data_source(
     AzureAISearchDataSource(

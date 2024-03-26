@@ -48,9 +48,9 @@
         {
             "name": "Start Python",
             "type": "debugpy",
+            "module": "src.app",
             "request": "launch",
-            "program": "${workspaceFolder}/src/app.py",
-            "cwd": "${workspaceFolder}/src",
+            "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
         },
         {

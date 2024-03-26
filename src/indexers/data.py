@@ -1,7 +1,7 @@
 import os
-from teams.ai.embeddings import AzureOpenAIEmbeddings, AzureOpenAIEmbeddingsOptions  # Replace with the actual module
+from teams.ai.embeddings import OpenAIEmbeddings, OpenAIEmbeddingsOptions, AzureOpenAIEmbeddings, AzureOpenAIEmbeddingsOptions  # Replace with the actual module
 
-from config import Config
+from ..config import Config
 
 async def get_doc_data():
     with open(f'{os.getcwd()}/src/files/Contoso_Electronics_PerkPlus_Program.md', 'r') as file:
@@ -35,6 +35,10 @@ async def get_doc_data():
 
 
 async def get_embedding_vector(text: str):
+    # embedding=OpenAIEmbeddings(OpenAIEmbeddingsOptions(
+    #     api_key=Config.OPENAI_API_KEY,
+    #     model=Config.OPENAI_MODEL_DEPLOYMENT_NAME,
+    # ))
     embeddings = AzureOpenAIEmbeddings(AzureOpenAIEmbeddingsOptions(
         azure_api_key=Config.AZURE_OPENAI_API_KEY,
         azure_endpoint=Config.AZURE_OPENAI_ENDPOINT,
